@@ -60,6 +60,8 @@ That's it. Same workflow, same concept, modern tmux underneath.
 | `timeout-minutes` | Minutes before auto-resuming the pipeline | `30` |
 | `server-host` | tmtv server host | `tmtv.se` |
 | `server-port` | tmtv server SSH port | `22` |
+| `server-rsa-fingerprint` | Expected SHA256 fingerprint of the server RSA host key | _(unset)_ |
+| `server-ed25519-fingerprint` | Expected SHA256 fingerprint of the server ED25519 host key | _(unset)_ |
 | `install-url` | URL to install script | `https://tmtv.se/install.sh` |
 
 ## Self-hosted server
@@ -71,7 +73,13 @@ If you run your own tmtv-server, point the action at it:
   with:
     server-host: tmtv.example.com
     server-port: 2222
+    server-rsa-fingerprint: SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    server-ed25519-fingerprint: SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+
+The fingerprint options are optional — if omitted, tmtv uses its default
+(the `tmtv.se` keys). Set them when pointing at a self-hosted server so the
+client verifies the host keys instead of trusting on first use.
 
 ## Examples
 
