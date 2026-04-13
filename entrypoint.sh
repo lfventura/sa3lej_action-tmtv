@@ -57,34 +57,39 @@ fi
 TMTV_SOCK="/tmp/tmtv.sock"
 tmtv -S "$TMTV_SOCK" -f "$TMTV_CONF" new-session -d -s ci-debug
 
-# Wait for the session to register with the server
-tmtv -S "$TMTV_SOCK" wait tmtv-ready
-
-# Extract session info from tmtv
-SSH_LINE=$(tmtv -S "$TMTV_SOCK" display -p '#{tmtv_ssh}' 2>/dev/null || true)
-SSH_RO_LINE=$(tmtv -S "$TMTV_SOCK" display -p '#{tmtv_ssh_ro}' 2>/dev/null || true)
-WEB_LINE=$(tmtv -S "$TMTV_SOCK" display -p '#{tmtv_web}' 2>/dev/null || true)
-WEB_RO_LINE=$(tmtv -S "$TMTV_SOCK" display -p '#{tmtv_web_ro}' 2>/dev/null || true)
+# Poll until the tmtv server populates the session env vars.
+# tmtv exposes #{tmtv_ssh}, #{tmtv_ssh_ro}, #{tmtv_web} as format variables
+# once the session is registered with the server (see tmtv README).
+SSH_LINE=""
+for _ in $(seq 1 60); do
+    SSH_LINE=$(tmtv -S "$TMTV_SOCK" display-message -p '#{tmtv_ssh}' 2>/dev/null || true)
+    if [ -n "$SSH_LINE" ]; then
+        break
+    fi
+    sleep 1
+done
+SSH_RO_LINE=$(tmtv -S "$TMTV_SOCK" display-message -p '#{tmtv_ssh_ro}' 2>/dev/null || true)
+WEB_LINE=$(tmtv -S "$TMTV_SOCK" display-message -p '#{tmtv_web}' 2>/dev/null || true)
 
 echo ""
 echo "========================================"
 echo "  tmtv debug session is ready!"
 echo "========================================"
 echo ""
-echo "  SSH (read-write): $SSH_LINE"
-echo "  SSH (read-only):  $SSH_RO_LINE"
-if [ -n "$WEB_LINE" ]; then
-    echo "  Web (read-write): $WEB_LINE"
+if [ -n "$SSH_LINE" ]; then
+    echo "  SSH (read-write): $SSH_LINE"
 fi
-if [ -n "$WEB_RO_LINE" ]; then
-    echo "  Web (read-only):  $WEB_RO_LINE"
+if [ -n "$SSH_RO_LINE" ]; then
+    echo "  SSH (read-only):  $SSH_RO_LINE"
+fi
+if [ -n "$WEB_LINE" ]; then
+    echo "  Web:              $WEB_LINE"
+fi
+if [ -z "$SSH_LINE" ] && [ -z "$SSH_RO_LINE" ]; then
+    echo "::warning::Could not extract tmtv tokens after 60s. Dumping tmtv messages:"
+    tmtv -S "$TMTV_SOCK" show-messages 2>/dev/null || true
 fi
 echo ""
-if [ -z "$SSH_LINE" ]; then
-    echo "  (Could not extract tokens automatically — dumping tmtv messages:)"
-    tmtv -S "$TMTV_SOCK" show-messages || true
-    echo ""
-fi
 if [ "$LIMIT_ACCESS" = "true" ] && [ -n "$KEYS" ]; then
     echo "  Access limited to: $GITHUB_ACTOR"
 fi
