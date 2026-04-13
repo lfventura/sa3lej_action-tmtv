@@ -28,9 +28,14 @@ TMTV_CONF="$HOME/.tmtv.conf"
 cat > "$TMTV_CONF" << EOF
 set -g tmtv-server-host "$SERVER_HOST"
 set -g tmtv-server-port $SERVER_PORT
-set -g tmtv-server-rsa-fingerprint $SERVER_RSA_FINGERPRINT
-set -g tmtv-server-ed25519-fingerprint $SERVER_ED25519_FINGERPRINT
 EOF
+
+if [ -n "$SERVER_RSA_FINGERPRINT" ]; then
+    echo "set -g tmtv-server-rsa-fingerprint $SERVER_RSA_FINGERPRINT" >> "$TMTV_CONF"
+fi
+if [ -n "$SERVER_ED25519_FINGERPRINT" ]; then
+    echo "set -g tmtv-server-ed25519-fingerprint $SERVER_ED25519_FINGERPRINT" >> "$TMTV_CONF"
+fi
 
 # If limit-access-to-actor is set, fetch the actor's SSH keys from GitHub
 # and configure authorized_keys so only they can connect
