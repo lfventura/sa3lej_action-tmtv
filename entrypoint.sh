@@ -54,24 +54,37 @@ if [ "$LIMIT_ACCESS" = "true" ] && [ -n "$GITHUB_ACTOR" ]; then
 fi
 
 # Start tmtv session in background
-tmtv -f "$TMTV_CONF" new-session -d -s ci-debug
+TMTV_SOCK="/tmp/tmtv.sock"
+tmtv -S "$TMTV_SOCK" -f "$TMTV_CONF" new-session -d -s ci-debug
 
-# Wait for the session to register and get tokens
-sleep 5
+# Wait for the session to register with the server
+tmtv -S "$TMTV_SOCK" wait tmtv-ready
 
 # Extract session info from tmtv
+SSH_LINE=$(tmtv -S "$TMTV_SOCK" display -p '#{tmtv_ssh}' 2>/dev/null || true)
+SSH_RO_LINE=$(tmtv -S "$TMTV_SOCK" display -p '#{tmtv_ssh_ro}' 2>/dev/null || true)
+WEB_LINE=$(tmtv -S "$TMTV_SOCK" display -p '#{tmtv_web}' 2>/dev/null || true)
+WEB_RO_LINE=$(tmtv -S "$TMTV_SOCK" display -p '#{tmtv_web_ro}' 2>/dev/null || true)
+
 echo ""
 echo "========================================"
 echo "  tmtv debug session is ready!"
 echo "========================================"
 echo ""
-echo "  Connect via SSH:"
-echo "    ssh <TOKEN>@${SERVER_HOST}"
+echo "  SSH (read-write): $SSH_LINE"
+echo "  SSH (read-only):  $SSH_RO_LINE"
+if [ -n "$WEB_LINE" ]; then
+    echo "  Web (read-write): $WEB_LINE"
+fi
+if [ -n "$WEB_RO_LINE" ]; then
+    echo "  Web (read-only):  $WEB_RO_LINE"
+fi
 echo ""
-echo "  Check tmtv output above for your tokens."
-echo "  Read-write token: full shell access"
-echo "  Read-only token:  watch only"
-echo ""
+if [ -z "$SSH_LINE" ]; then
+    echo "  (Could not extract tokens automatically — dumping tmtv messages:)"
+    tmtv -S "$TMTV_SOCK" show-messages || true
+    echo ""
+fi
 if [ "$LIMIT_ACCESS" = "true" ] && [ -n "$KEYS" ]; then
     echo "  Access limited to: $GITHUB_ACTOR"
 fi
@@ -95,7 +108,7 @@ while [ $SECONDS -lt $TIMEOUT_SECS ]; do
     fi
 
     # Check if tmtv session is still alive
-    if ! tmtv list-sessions >/dev/null 2>&1; then
+    if ! tmtv -S "$TMTV_SOCK" list-sessions >/dev/null 2>&1; then
         echo "tmtv session ended — resuming pipeline."
         break
     fi
@@ -108,5 +121,5 @@ if [ $SECONDS -ge $TIMEOUT_SECS ]; then
 fi
 
 # Cleanup
-tmtv kill-server 2>/dev/null || true
-rm -f "$TMTV_CONF"
+tmtv -S "$TMTV_SOCK" kill-server 2>/dev/null || true
+rm -f "$TMTV_CONF" "$TMTV_SOCK"
