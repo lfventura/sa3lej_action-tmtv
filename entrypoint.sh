@@ -4,6 +4,8 @@ set -e
 TIMEOUT="${INPUT_TIMEOUT_MINUTES:-30}"
 SERVER_HOST="${INPUT_SERVER_HOST:-tmtv.se}"
 SERVER_PORT="${INPUT_SERVER_PORT:-22}"
+SERVER_RSA_FINGERPRINT="${INPUT_SERVER_RSA_FINGERPRINT:-}"
+SERVER_ED25519_FINGERPRINT="${INPUT_SERVER_ED25519_FINGERPRINT:-}"
 INSTALL_URL="${INPUT_INSTALL_URL:-https://tmtv.se/install.sh}"
 LIMIT_ACCESS="${INPUT_LIMIT_ACCESS_TO_ACTOR:-false}"
 
@@ -26,6 +28,8 @@ TMTV_CONF="$HOME/.tmtv.conf"
 cat > "$TMTV_CONF" << EOF
 set -g tmtv-server-host "$SERVER_HOST"
 set -g tmtv-server-port $SERVER_PORT
+set -g tmtv-server-rsa-fingerprint $SERVER_RSA_FINGERPRINT
+set -g tmtv-server-ed25519-fingerprint $SERVER_ED25519_FINGERPRINT
 EOF
 
 # If limit-access-to-actor is set, fetch the actor's SSH keys from GitHub

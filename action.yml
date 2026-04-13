@@ -23,6 +23,14 @@ inputs:
     description: 'tmtv server SSH port (default: 22)'
     required: false
     default: '22'
+  server-rsa-fingerprint:
+    description: 'Expected SHA256 fingerprint of the tmtv server RSA host key (e.g. SHA256:...)'
+    required: false
+    default: ''
+  server-ed25519-fingerprint:
+    description: 'Expected SHA256 fingerprint of the tmtv server ED25519 host key (e.g. SHA256:...)'
+    required: false
+    default: ''
   install-url:
     description: 'URL to install script (default: https://tmtv.se/install.sh)'
     required: false
@@ -38,6 +46,8 @@ runs:
         INPUT_TIMEOUT_MINUTES: ${{ inputs.timeout-minutes }}
         INPUT_SERVER_HOST: ${{ inputs.server-host }}
         INPUT_SERVER_PORT: ${{ inputs.server-port }}
+        INPUT_SERVER_RSA_FINGERPRINT: ${{ inputs.server-rsa-fingerprint }}
+        INPUT_SERVER_ED25519_FINGERPRINT: ${{ inputs.server-ed25519-fingerprint }}
         INPUT_INSTALL_URL: ${{ inputs.install-url }}
         GITHUB_ACTOR: ${{ github.actor }}
         GITHUB_TOKEN: ${{ github.token }}
